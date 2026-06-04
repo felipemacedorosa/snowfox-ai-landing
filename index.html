@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Readiness Assessment | SnowFox AI</title>
+  <meta name="description" content="Assess your organization's AI readiness in minutes and uncover the gaps, capabilities, and next steps needed to turn AI into measurable business impact.">
+  <link rel="icon" type="image/png" href="fox-icon.png">
+  <link rel="apple-touch-icon" href="fox-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <style>
+
+/* ─── TOKENS ─────────────────────────────────── */
+:root {
+  /* ── Brand palette */
+  --brand-start:  #8E2DE2;   /* gradient start */
+  --brand-end:    #4A00E0;   /* gradient end */
+  --brand-accent: #7030A0;   /* roxo destaque */
+
+  /* ── Derived */
+  --pa:   var(--brand-start);
+  --pb:   var(--brand-end);
+  --grad: linear-gradient(135deg, var(--brand-start), var(--brand-end));
+
+  /* ── Brand alpha scale (from --brand-start 142,45,226) */
+  --pa-70: rgba(142,45,226,0.70);
+  --pa-55: rgba(142,45,226,0.55);
+  --pa-35: rgba(142,45,226,0.35);
+  --pa-18: rgba(142,45,226,0.18);
+  --pa-14: rgba(142,45,226,0.14);
+
+  /* ── Accent alpha scale (from --brand-accent 112,48,160) */
+  --accent-80: rgba(112,48,160,0.80);
+  --accent-55: rgba(112,48,160,0.55);
+  --accent-20: rgba(112,48,160,0.20);
+
+  /* Text on dark bg — boosted for readability */
+  --text-h:   #ffffff;
+  --text-b:   rgba(238,232,255,0.96);
+  --text-m:   rgba(210,198,255,0.82);
+  --text-p:   rgba(190,175,245,0.55);   /* input placeholder */
+
+  /* Glass surfaces — more opaque, stronger blur */
+  --glass-copy:     rgba(8, 3, 32, 0.72);
+  --glass-form:     rgba(6, 2, 26, 0.82);
+  --glass-nav:      rgba(5, 1, 22, 0.86);
+  --glass-foot:     rgba(3, 1, 15, 0.90);
+  --glass-border:   rgba(255,255,255,0.11);
+  --glass-border-h: var(--pa-55);
+
+  /* Input surfaces (needs solid bg for readability) */
+  --input-bg:     rgba(255,255,255,0.93);
+  --input-border: rgba(255,255,255,0.18);
+  --input-focus:  var(--brand-start);
+
+  --r:      12px;
+  --r-lg:   16px;
+  --r-pill: 9999px;
+  --nav-h:  68px;
+  --max-w:  1720px;
+
+  --blur: blur(28px);  /* ↑ was 20px — stronger separation */
+}
+
+/* ─── RESET ──────────────────────────────────── */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html  { scroll-behavior:smooth; font-size:16px; }
+body  {
+  font-family: 'Poppins', system-ui, sans-serif;
+  background: #080320;           /* fallback if WebGL fails */
+  color: var(--text-b);
+  line-height: 1.65;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+img { display:block; max-width:100%; }
+
+/* ─── SHADER CANVAS ──────────────────────────── */
+#shader-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ─── CENTER VIGNETTE OVERLAY ────────────────── */
+/* Darkens the content zone without touching shader edges */
+#content-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 1;                    /* above canvas, below page */
+  pointer-events: none;
+  background:
+    /* strong radial dim over center content area */
+    radial-gradient(ellipse 75% 85% at 50% 48%,
+      rgba(4, 1, 18, 0.62) 0%,
+      rgba(4, 1, 18, 0.30) 55%,
+      transparent 100%),
+    /* soft global floor so pure shader edges stay vivid */
+    linear-gradient(to bottom,
+      rgba(4, 1, 18, 0.08) 0%,
+      rgba(4, 1, 18, 0.22) 100%);
+}
+
+/* ─── LAYOUT ─────────────────────────────────── */
+.page {
+  position: relative;
+  z-index: 2;
+  min-height: 100dvh;
+  padding-top: var(--nav-h);
+}
+
+.wrap {
+  width: 100%;
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+@media(min-width:640px)  { .wrap { padding-inline:32px; } }
+@media(min-width:1024px) { .wrap { padding-inline:52px; } }
+@media(min-width:1400px) { .wrap { padding-inline:64px; } }
+
+/* ─── GLASS MIXIN ────────────────────────────── */
+.glass {
+  background: var(--glass-copy);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+}
+
+/* ─── GRADIENT TEXT ──────────────────────────── */
+.gt {
+  background: var(--grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── KEYFRAMES ──────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(18px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes pulseRing {
+  0%   { opacity:.4; transform:scale(1); }
+  100% { opacity:0;  transform:scale(2.6); }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  *, *::before, *::after { animation:none!important; transition:none!important; }
+}
+
+/* ─────────────────────────────────────────────────
+   BUTTON COLORFUL  (port of button-colorful.tsx)
+   Dark base + blurred gradient overlay that glows
+   on hover. Adapted to Snowfox AI purple palette.
+───────────────────────────────────────────────── */
+.btn-colorful {
+  /* layout */
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  /* dark base — same concept as bg-zinc-900 in original */
+  background: #0d0520;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 6px;
+  cursor: pointer;
+
+  /* type */
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  text-decoration: none;
+  touch-action: manipulation;
+
+  transition: border-color .25s, transform .18s, box-shadow .25s;
+}
+
+/* The glowing gradient layer — blurred, lives behind content */
+.btn-colorful::before {
+  content: '';
+  position: absolute;
+  inset: -2px;           /* slightly outside so blur doesn't clip at edges */
+  border-radius: inherit;
+  /* brand purple → violet → fuchsia (mirrors indigo→purple→pink from original) */
+  background: linear-gradient(135deg, var(--brand-start), var(--brand-accent), var(--brand-end));
+  opacity: 0.42;
+  filter: blur(10px);
+  transition: opacity .45s ease;
+  pointer-events: none;
+}
+.btn-colorful:hover::before  { opacity: 0.84; }
+.btn-colorful:active::before { opacity: 0.60; }
+
+/* Content sits above the blur layer */
+.btn-colorful-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 1;
+}
+.btn-colorful-inner svg {
+  flex-shrink: 0;
+  transition: transform .2s ease;
+}
+.btn-colorful:hover svg { transform: translate(2px, -2px); }
+
+/* Hover lift */
+.btn-colorful:hover  { transform: translateY(-2px); box-shadow: 0 8px 28px var(--pa-35); }
+.btn-colorful:active { transform: translateY(0);    box-shadow: none; }
+
+/* Focus ring */
+.btn-colorful:focus-visible {
+  outline: 2px solid rgba(167,139,250,0.80);
+  outline-offset: 3px;
+}
+
+/* Disabled */
+.btn-colorful:disabled {
+  opacity: .50;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Size variants */
+.btn-colorful-sm {   /* navbar */
+  height: 40px;
+  padding: 0 20px;
+  font-size: 13.5px;
+}
+.btn-colorful-lg {   /* form submit */
+  height: 54px;
+  padding: 0 28px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  width: 100%;
+  background: linear-gradient(160deg, #7C3AED 0%, #5B21B6 100%);
+  border: 1px solid rgba(139,92,246,0.35);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(91,33,182,0.35);
+}
+.btn-colorful-lg::before { opacity: 0; }
+.btn-colorful-lg:hover {
+  background: linear-gradient(160deg, #8B4FF5 0%, #6D28D9 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 4px 16px rgba(109,40,217,0.40);
+}
+.btn-colorful-lg:hover::before { opacity: 0; }
+
+/* lg CTA icon — chevron moves right on hover, not diagonally */
+.btn-colorful-lg .btn-colorful-inner { gap: 8px; }
+.btn-colorful-lg .btn-colorful-inner svg { width: 13px; height: 13px; opacity: 0.75; }
+.btn-colorful-lg:hover svg { transform: translateX(3px); }
+
+/* ─── NAVBAR ─────────────────────────────────── */
+.nav {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  height: var(--nav-h);
+  z-index: 200;
+  transition: background .25s, backdrop-filter .25s, box-shadow .25s;
+}
+.nav.solid {
+  background: var(--glass-nav);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+}
+/* Nav spans full width — not constrained by .wrap max-width */
+.nav .wrap {
+  max-width: 100%;
+  padding-inline: clamp(28px, 4vw, 72px);
+}
+.nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--nav-h);
+}
+.nav-logo img { height: 28px; width: auto; }
+
+/* .btn-nav — now uses .btn-colorful base, no separate rules needed */
+
+/* ─── HEADLINE BLOCK ─────────────────────────── */
+.headline-block {
+  position: relative;
+  text-align: center;
+  padding: 28px 0 28px;
+  margin-bottom: 24px;
+  animation: fadeUp .55s ease both;
+}
+.headline-block h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(30px, 3.6vw, 52px);
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -.02em;
+  color: #ffffff;
+  text-shadow: 0 2px 24px rgba(0,0,0,0.55);
+  max-width: 980px;
+  margin-inline: auto;
+  margin-bottom: 18px;
+}
+.headline-block .sub {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(16px, 1.5vw, 18px);
+  line-height: 1.76;
+  color: rgba(235,228,255,0.94);
+  text-shadow: 0 1px 12px rgba(0,0,0,0.45);
+  max-width: 880px;
+  margin-inline: auto;
+}
+
+/* ─── TWO-COLUMN GRID ────────────────────────── */
+.body-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  padding-bottom: 56px;
+  animation: fadeUp .55s .12s ease both;
+  position: relative;
+  isolation: isolate;
+}
+/* Subtle dark ground behind the cards so content feels anchored */
+.body-grid::before {
+  content: '';
+  position: absolute;
+  inset: -32px -5%;
+  background: radial-gradient(ellipse 85% 90% at 50% 50%,
+    rgba(4,1,22,0.42) 0%,
+    rgba(4,1,22,0.18) 55%,
+    transparent 80%);
+  border-radius: 40px;
+  pointer-events: none;
+  z-index: -1;
+}
+@media(min-width:900px) {
+  .body-grid { grid-template-columns: 1fr 500px; gap: 22px; align-items: stretch; }
+  .headline-block { margin-bottom: 22px; }
+}
+@media(min-width:1100px) {
+  .body-grid { grid-template-columns: 1fr 560px; gap: 26px; }
+  .headline-block { margin-bottom: 26px; }
+}
+@media(min-width:1300px) {
+  .body-grid { grid-template-columns: 1fr 620px; gap: 30px; }
+  .headline-block { margin-bottom: 30px; }
+}
+
+/* ─── LEFT CARD ──────────────────────────────── */
+.copy-card {
+  padding: 40px 44px 36px;
+  border-radius: var(--r-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+@media(max-width:640px) {
+  .copy-card,
+  .form-card { padding: 28px 24px; }
+}
+
+/* Section block within the card */
+.csect { margin-bottom: 28px; }
+.csect:last-child { margin-bottom: 0; }
+
+/* Eyebrow label above each section heading */
+.csect-eye {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: rgba(167,139,250,0.72);
+  margin-bottom: 6px;
+}
+
+/* Section heading */
+.csect-h {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.28;
+  margin-bottom: 12px;
+  letter-spacing: -.015em;
+}
+
+/* Short body paragraph under a section heading */
+.csect-body {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  line-height: 1.76;
+  color: rgba(220,212,255,0.88);
+  margin-bottom: 18px;
+  max-width: 580px;             /* keeps line length comfortable even in wide card */
+}
+
+/* ── Problem rows (section 1) */
+.prob-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.prob-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(225,215,255,0.90);
+  line-height: 1.45;
+}
+.prob-pip {
+  flex-shrink: 0;
+  color: rgba(167,139,250,0.70);
+  font-size: 18px;
+  line-height: 1;
+  margin-top: -1px;
+}
+
+/* Section divider */
+.csect-rule {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 24px 0;
+}
+
+/* ── Deliverable rows (section 2) */
+.deliv-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.deliv-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  color: rgba(225,215,255,0.90);
+}
+/* Checkmark icon circle */
+.deliv-check {
+  flex-shrink: 0;
+  margin-top: 1px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--grad);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.deliv-check svg {
+  width: 10px; height: 10px;
+  stroke: #fff;
+  stroke-width: 2.5;
+  fill: none;
+}
+
+/* Time badge */
+.time-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+  padding: 6px 13px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  color: rgba(196,181,253,0.72);
+}
+.time-badge svg {
+  width: 13px; height: 13px;
+  flex-shrink: 0;
+  color: rgba(167,139,250,0.80);
+}
+
+/* ─── RIGHT COLUMN ───────────────────────────── */
+.right-col {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── PREMIUM FORM CARD ──────────────────────── */
+.form-card {
+  position: relative;
+  flex: 1;                          /* fill full height of right-col */
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-form);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(255,255,255,0.11);
+  border-radius: var(--r-lg);
+  padding: 40px 44px 36px;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.35);
+  overflow: hidden;
+}
+
+/* Card header */
+.form-header { margin-bottom: 32px; }
+.form-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  margin-bottom: 10px;
+}
+.form-desc {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(210,198,255,0.78);
+}
+
+.fields-zone {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ─── WHAT HAPPENS NEXT ──────────────────────── */
+.what-next {
+  margin-top: auto;                 /* pushes to bottom of card */
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.what-next-eye {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: rgba(167,139,250,0.65);
+  margin-bottom: 14px;
+}
+.what-next-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.wn-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.50;
+  color: rgba(210,200,255,0.78);
+}
+.wn-num {
+  flex-shrink: 0;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#8E2DE2,#4A00E0);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px; font-weight: 800;
+  color: #fff;
+  margin-top: 1px;
+}
+.field { display:flex; flex-direction:column; gap:8px; }
+
+.field label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: rgba(214,200,255,0.95); /* ↑ was .85 — clearly readable */
+  cursor: pointer;
+}
+.field input {
+  height: 60px;
+  padding: 0 18px;
+  border: 1.5px solid var(--input-border);
+  border-radius: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: #1a0840;
+  background: var(--input-bg);
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+  touch-action: manipulation;
+}
+.field input::placeholder { color: #a090c0; }
+.field input:hover:not(:focus) { border-color: var(--pa-35); }
+.field input:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px var(--pa-18);
+}
+.field input[aria-invalid="true"] {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.14);
+}
+.field-error {
+  display: none;
+  font-size: 11.5px;
+  color: #fca5a5;
+  margin-top: 2px;
+}
+.field input[aria-invalid="true"] ~ .field-error { display:block; }
+
+/* .btn-submit — now uses .btn-colorful base, no separate rules needed */
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255,255,255,0.09);
+}
+
+.form-note {
+  font-family: 'Poppins', sans-serif;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(196,181,253,0.80);
+  letter-spacing: .04em;
+}
+
+.form-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 10px;
+  color: rgba(180,165,240,0.45);
+  line-height: 1.5;
+}
+.form-trust svg { flex-shrink: 0; color: rgba(167,139,250,0.50); }
+
+/* Success state */
+.success-msg {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 24px 16px;
+}
+.success-msg svg   { color: #34d399; }
+.success-msg h3    {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 18px; font-weight: 800; color: #fff;
+}
+.success-msg p     { font-size: 14px; color: var(--text-m); line-height:1.6; }
+
+/* ─── FOOTER ─────────────────────────────────── */
+.footer {
+  position: relative; z-index: 2;
+  background: var(--glass-foot);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 28px 0;
+}
+.footer-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+@media(min-width:640px) {
+  .footer-row { flex-direction:row; justify-content:space-between; text-align:left; }
+}
+.footer-logo img  { height:24px; }
+.footer-link { font-family:'Poppins',sans-serif; font-size:10px; color:var(--text-m); text-decoration:none; transition:color .2s; }
+.footer-link:hover { color:rgba(196,181,253,1); }
+.footer-copy { font-family:'Poppins',sans-serif; font-size:10px; color:var(--text-m); }
+
+/* ─── 3D TILT ────────────────────────────────── */
+.copy-card,
+.form-card {
+  will-change: transform;
+  transition: transform 0.45s ease-in-out, box-shadow 0.45s ease-in-out;
+  /* force GPU layer at native resolution before any transform fires */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+@media (hover: none) {
+  .copy-card, .form-card {
+    will-change: auto;
+    transition: none !important;
+  }
+}
+
+/* ─── ACCESSIBILITY ──────────────────────────── */
+:focus-visible { outline:2px solid var(--pa); outline-offset:3px; border-radius:4px; }
+.skip {
+  position:absolute; top:-100px; left:16px;
+  background:var(--pa); color:#fff;
+  padding:8px 16px; border-radius:8px;
+  font-size:14px; font-weight:600;
+  text-decoration:none; transition:top .2s; z-index:9999;
+}
+.skip:focus { top:16px; }
+
+  </style>
+</head>
+<body>
+
+<!-- ════════ SHADER CANVAS (background) ════════ -->
+<canvas id="shader-bg" aria-hidden="true"></canvas>
+
+<!-- Center vignette: dims the content zone, keeps edges vivid -->
+<div id="content-vignette" aria-hidden="true"></div>
+
+<a class="skip" href="#main">Pular para o conteúdo</a>
+
+<!-- ════════ NAVBAR ════════ -->
+<header>
+  <nav class="nav" id="nav" aria-label="Navegação principal">
+    <div class="wrap">
+      <div class="nav-row">
+        <a href="/" aria-label="Snowfox AI – página inicial">
+          <img src="logo-dark.png" alt="Snowfox AI" height="28">
+        </a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<!-- ════════ MAIN ════════ -->
+<main id="main" class="page">
+  <div class="wrap">
+
+    <!-- Headline -->
+    <div class="headline-block">
+      <h1>Is Your Company Truly Ready to Turn AI into <span class="gt">Business Value?</span></h1>
+      <p class="sub">Assess your organization's AI readiness in minutes and uncover the gaps, capabilities, and next steps needed to turn AI into measurable business impact.</p>
+    </div>
+
+    <!-- Two-column -->
+    <div class="body-grid">
+
+      <!-- LEFT: copy -->
+      <div class="copy-card glass" role="main">
+
+        <!-- Section 1: The Challenge -->
+        <div class="csect">
+          <p class="csect-eye">The Challenge</p>
+          <h2 class="csect-h">Why AI Initiatives Fall Short</h2>
+          <p class="csect-body">For many organizations, AI is already a strategic priority. The challenge is not recognizing its importance. The challenge is being ready to execute.</p>
+          <ul class="prob-list" role="list" aria-label="Common AI execution challenges">
+            <li class="prob-item"><span class="prob-pip" aria-hidden="true">–</span>Fragmented data and systems</li>
+            <li class="prob-item"><span class="prob-pip" aria-hidden="true">–</span>Low internal adoption</li>
+            <li class="prob-item"><span class="prob-pip" aria-hidden="true">–</span>Unclear ownership and strategy</li>
+            <li class="prob-item"><span class="prob-pip" aria-hidden="true">–</span>Operational bottlenecks</li>
+            <li class="prob-item"><span class="prob-pip" aria-hidden="true">–</span>Limited business impact</li>
+          </ul>
+        </div>
+
+        <div class="csect-rule" aria-hidden="true"></div>
+
+        <!-- Section 2: What you get -->
+        <div class="csect">
+          <p class="csect-eye">Your Results</p>
+          <h2 class="csect-h">What You'll Get from This Assessment</h2>
+          <ul class="deliv-list" role="list" aria-label="Assessment deliverables">
+            <li class="deliv-item">
+              <span class="deliv-check" aria-hidden="true">
+                <svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg"><polyline points="2,6 5,9 10,3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              A clear AI Readiness Score
+            </li>
+            <li class="deliv-item">
+              <span class="deliv-check" aria-hidden="true">
+                <svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg"><polyline points="2,6 5,9 10,3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Insight into critical gaps and blockers
+            </li>
+            <li class="deliv-item">
+              <span class="deliv-check" aria-hidden="true">
+                <svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg"><polyline points="2,6 5,9 10,3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              A structured view across key readiness dimensions
+            </li>
+            <li class="deliv-item">
+              <span class="deliv-check" aria-hidden="true">
+                <svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg"><polyline points="2,6 5,9 10,3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Strategic recommendations tailored to your current stage
+            </li>
+            <li class="deliv-item">
+              <span class="deliv-check" aria-hidden="true">
+                <svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg"><polyline points="2,6 5,9 10,3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Practical next steps to turn AI into business outcomes
+            </li>
+          </ul>
+
+          <div class="time-badge" role="note" aria-label="Completion time">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Completion time: less than 10 minutes
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: single premium conversion card -->
+      <div class="right-col">
+        <div class="form-card" id="form">
+          <div id="form-content" style="flex:1;display:flex;flex-direction:column;">
+
+            <!-- Card header -->
+            <div class="form-header">
+              <p class="csect-eye">Get Started</p>
+              <h2 class="form-title">Start Your Assessment</h2>
+              <p class="form-desc">Get your AI readiness score and next-step recommendations in under 10 minutes.</p>
+            </div>
+
+            <!-- Form fields -->
+            <form id="lead-form" novalidate autocomplete="on" style="flex:1;display:flex;flex-direction:column;">
+              <div class="fields-zone">
+                <div class="field-group">
+                  <div class="field">
+                    <label for="f-name">Full Name</label>
+                    <input type="text" id="f-name" name="name" placeholder="Your full name"
+                      autocomplete="name" required aria-required="true" aria-describedby="e-name">
+                    <span id="e-name" class="field-error" role="alert">Please enter your name.</span>
+                  </div>
+                  <div class="field">
+                    <label for="f-email">Work Email</label>
+                    <input type="email" id="f-email" name="email" placeholder="you@company.com"
+                      autocomplete="work email" required aria-required="true" aria-describedby="e-email">
+                    <span id="e-email" class="field-error" role="alert">Please enter a valid email.</span>
+                  </div>
+                  <div class="field">
+                    <label for="f-company">Company</label>
+                    <input type="text" id="f-company" name="company" placeholder="Your company name"
+                      autocomplete="organization" required aria-required="true" aria-describedby="e-company">
+                    <span id="e-company" class="field-error" role="alert">Please enter your company.</span>
+                  </div>
+                  <div class="field">
+                    <label for="f-role">Job Title</label>
+                    <input type="text" id="f-role" name="role" placeholder="e.g. CEO, CTO, VP of Data"
+                      autocomplete="organization-title" required aria-required="true" aria-describedby="e-role">
+                    <span id="e-role" class="field-error" role="alert">Please enter your job title.</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actions pinned to bottom -->
+              <div class="form-actions">
+                <button type="submit" class="btn-colorful btn-colorful-lg" id="submit-btn">
+                  <span class="btn-colorful-inner">
+                    Start AI Readiness Assessment
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+                  </span>
+                </button>
+                <p class="form-note">Free &nbsp;·&nbsp; Instant results &nbsp;·&nbsp; No commitment</p>
+              </div>
+            </form>
+
+          </div><!-- /form-content -->
+
+          <!-- Success state -->
+          <div class="success-msg" id="success-msg" role="status" aria-live="polite" style="display:none;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:32px 16px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+              fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="16 9 11 15 8 12"/></svg>
+            <h3 style="font-family:'Montserrat',sans-serif;font-size:18px;font-weight:800;color:#fff;">You're all set!</h3>
+            <p style="font-size:14px;color:var(--text-m);line-height:1.6;">Check your inbox — your assessment link is on its way to the email you provided.</p>
+          </div>
+
+        </div><!-- /form-card -->
+      </div><!-- /right-col -->
+    </div><!-- /body-grid -->
+  </div><!-- /wrap -->
+</main>
+
+<!-- ════════ FOOTER ════════ -->
+<footer class="footer" role="contentinfo">
+  <div class="wrap">
+    <div class="footer-row">
+      <a href="/" aria-label="Snowfox AI">
+        <img src="logo-dark.png" alt="Snowfox AI" height="24">
+      </a>
+      <a href="https://snowfox-ai.com" class="footer-link" rel="noopener">snowfox-ai.com</a>
+      <p class="footer-copy">© 2025 Snowfox AI. Todos os direitos reservados.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ════════════════════════════════════════════
+     WEBGL SHADER BACKGROUND
+     Ported from React component (shader-background.tsx)
+════════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  const VS = `
+    attribute vec4 aVertexPosition;
+    void main() { gl_Position = aVertexPosition; }
+  `;
+
+  const FS = `
+    precision highp float;
+    uniform vec2  iResolution;
+    uniform float iTime;
+
+    const float overallSpeed      = 0.2;
+    const float gridSmoothWidth   = 0.015;
+    const float axisWidth         = 0.05;
+    const float majorLineWidth    = 0.025;
+    const float minorLineWidth    = 0.0125;
+    const float majorLineFrequency= 5.0;
+    const float minorLineFrequency= 1.0;
+    const float scale             = 5.0;
+    const vec4  lineColor         = vec4(0.557, 0.176, 0.886, 1.0); /* #8E2DE2 */
+    const float minLineWidth      = 0.01;
+    const float maxLineWidth      = 0.2;
+    const float lineSpeed         = 1.0 * overallSpeed;
+    const float lineAmplitude     = 1.0;
+    const float lineFrequency     = 0.2;
+    const float warpSpeed         = 0.2 * overallSpeed;
+    const float warpFrequency     = 0.5;
+    const float warpAmplitude     = 1.0;
+    const float offsetFrequency   = 0.5;
+    const float offsetSpeed       = 1.33 * overallSpeed;
+    const float minOffsetSpread   = 0.6;
+    const float maxOffsetSpread   = 2.0;
+    const int   linesPerGroup     = 16;
+
+    #define drawCircle(pos,radius,coord) smoothstep(radius+gridSmoothWidth,radius,length(coord-(pos)))
+    #define drawSmoothLine(pos,halfWidth,t) smoothstep(halfWidth,0.0,abs(pos-(t)))
+    #define drawCrispLine(pos,halfWidth,t)  smoothstep(halfWidth+gridSmoothWidth,halfWidth,abs(pos-(t)))
+    #define drawPeriodicLine(freq,width,t)  drawCrispLine(freq/2.0,width,abs(mod(t,freq)-(freq)/2.0))
+
+    float drawGridLines(float axis) {
+      return drawCrispLine(0.0,axisWidth,axis)
+           + drawPeriodicLine(majorLineFrequency,majorLineWidth,axis)
+           + drawPeriodicLine(minorLineFrequency,minorLineWidth,axis);
+    }
+    float drawGrid(vec2 space) {
+      return min(1.0, drawGridLines(space.x) + drawGridLines(space.y));
+    }
+    float random(float t) {
+      return (cos(t) + cos(t*1.3+1.3) + cos(t*1.4+1.4)) / 3.0;
+    }
+    float getPlasmaY(float x, float hFade, float offset) {
+      return random(x*lineFrequency + iTime*lineSpeed)*hFade*lineAmplitude + offset;
+    }
+
+    void main() {
+      vec2 uv    = gl_FragCoord.xy / iResolution.xy;
+      vec2 space = (gl_FragCoord.xy - iResolution.xy/2.0) / iResolution.x * 2.0 * scale;
+
+      float hFade = 1.0 - (cos(uv.x*6.28)*0.5 + 0.5);
+      float vFade = 1.0 - (cos(uv.y*6.28)*0.5 + 0.5);
+
+      space.y += random(space.x*warpFrequency + iTime*warpSpeed) * warpAmplitude*(0.5+hFade);
+      space.x += random(space.y*warpFrequency + iTime*warpSpeed+2.0) * warpAmplitude*hFade;
+
+      vec4 lines  = vec4(0.0);
+      vec4 bgCol1 = vec4(0.031, 0.012, 0.125, 1.0); /* #080320 — brand dark base */
+      vec4 bgCol2 = vec4(0.175, 0.050, 0.310, 1.0); /* #2D0D4F — dark accent purple */
+
+      for (int l = 0; l < linesPerGroup; l++) {
+        float nli        = float(l) / float(linesPerGroup);
+        float offTime    = iTime * offsetSpeed;
+        float offPos     = float(l) + space.x * offsetFrequency;
+        float rand       = random(offPos + offTime)*0.5 + 0.5;
+        float halfWidth  = mix(minLineWidth, maxLineWidth, rand*hFade) / 2.0;
+        float offset     = random(offPos + offTime*(1.0+nli)) * mix(minOffsetSpread,maxOffsetSpread,hFade);
+        float linePos    = getPlasmaY(space.x, hFade, offset);
+        float line       = drawSmoothLine(linePos, halfWidth, space.y)/2.0
+                         + drawCrispLine(linePos, halfWidth*0.15, space.y);
+
+        float cx         = mod(float(l) + iTime*lineSpeed, 25.0) - 12.0;
+        vec2  cPos       = vec2(cx, getPlasmaY(cx, hFade, offset));
+        float circle     = drawCircle(cPos, 0.01, space) * 4.0;
+
+        line += circle;
+        lines += line * lineColor * rand;
+      }
+
+      vec4 fragColor  = mix(bgCol1, bgCol2, uv.x);
+      fragColor      *= vFade;
+      fragColor.a     = 1.0;
+      fragColor      += lines;
+      gl_FragColor    = fragColor;
+    }
+  `;
+
+  function loadShader(gl, type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      console.error('Shader error:', gl.getShaderInfoLog(s));
+      gl.deleteShader(s);
+      return null;
+    }
+    return s;
+  }
+
+  function initProgram(gl) {
+    const vs = loadShader(gl, gl.VERTEX_SHADER,   VS);
+    const fs = loadShader(gl, gl.FRAGMENT_SHADER, FS);
+    const p  = gl.createProgram();
+    gl.attachShader(p, vs);
+    gl.attachShader(p, fs);
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+      console.error('Program link error:', gl.getProgramInfoLog(p));
+      return null;
+    }
+    return p;
+  }
+
+  const canvas = document.getElementById('shader-bg');
+  const gl     = canvas.getContext('webgl');
+
+  if (!gl) {
+    console.warn('WebGL not supported — shader background disabled.');
+    return;
+  }
+
+  const prog = initProgram(gl);
+  if (!prog) return;
+
+  // Fullscreen quad
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER,
+    new Float32Array([-1,-1, 1,-1, -1,1, 1,1]),
+    gl.STATIC_DRAW
+  );
+
+  const info = {
+    aPos:       gl.getAttribLocation(prog,  'aVertexPosition'),
+    uRes:       gl.getUniformLocation(prog, 'iResolution'),
+    uTime:      gl.getUniformLocation(prog, 'iTime'),
+  };
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  window.addEventListener('resize', resize, { passive: true });
+  resize();
+
+  let raf;
+  const t0 = Date.now();
+
+  function render() {
+    const t = (Date.now() - t0) / 1000;
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(prog);
+    gl.uniform2f(info.uRes,  canvas.width, canvas.height);
+    gl.uniform1f(info.uTime, t);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.vertexAttribPointer(info.aPos, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(info.aPos);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    raf = requestAnimationFrame(render);
+  }
+  render();
+
+  // Pause when tab hidden to save GPU
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { cancelAnimationFrame(raf); }
+    else { raf = requestAnimationFrame(render); }
+  });
+}());
+</script>
+
+<script>
+// ─── 3D Tilt  (port of InteractiveProductCard mousemove/leave logic) ───────
+function applyTilt(el, maxRotate) {
+  el.addEventListener('mousemove', function(e) {
+    var rect = el.getBoundingClientRect();
+    var rotX = ((e.clientY - rect.top  - rect.height / 2) / (rect.height / 2)) * -maxRotate;
+    var rotY = ((e.clientX - rect.left - rect.width  / 2) / (rect.width  / 2)) *  maxRotate;
+    el.style.transition = 'transform 0.1s ease-out, box-shadow 0.1s ease-out';
+    el.style.transform  = 'perspective(900px) rotateX(' + rotX + 'deg) rotateY(' + rotY + 'deg)';
+    el.style.boxShadow  = '0 24px 60px rgba(0,0,0,0.55), 0 0 40px rgba(142,45,226,0.18)';
+  });
+  el.addEventListener('mouseleave', function() {
+    el.style.transition = 'transform 0.5s ease-in-out, box-shadow 0.5s ease-in-out';
+    el.style.transform  = 'translateZ(0)';
+    el.style.boxShadow  = '';
+  });
+}
+
+applyTilt(document.querySelector('.copy-card'),      8);
+applyTilt(document.querySelector('.form-card'),      8);
+
+// ─── Pause form-card tilt while typing ───────────
+(function () {
+  var formCard = document.querySelector('.form-card');
+  var tiltPaused = false;
+
+  function pauseTilt() {
+    if (tiltPaused) return;
+    tiltPaused = true;
+    formCard.style.transition = 'transform 0.4s ease-out, box-shadow 0.4s ease-out';
+    formCard.style.transform  = 'translateZ(0)';
+    formCard.style.boxShadow  = '';
+  }
+
+  function resumeTilt() {
+    tiltPaused = false;
+  }
+
+  // Override mousemove to respect pause
+  formCard.addEventListener('mousemove', function(e) {
+    if (tiltPaused) e.stopImmediatePropagation();
+  }, true);
+
+  document.getElementById('lead-form').querySelectorAll('input').forEach(function(inp) {
+    inp.addEventListener('focus', pauseTilt);
+    inp.addEventListener('blur',  resumeTilt);
+  });
+}());
+
+// ─── Navbar scroll ───────────────────────────────
+const nav = document.getElementById('nav');
+const syncNav = () => nav.classList.toggle('solid', window.scrollY > 16);
+window.addEventListener('scroll', syncNav, { passive: true });
+syncNav();
+
+// ─── Form validation + submit ────────────────────
+const form = document.getElementById('lead-form');
+
+function validate(input) {
+  const empty = !input.value.trim();
+  const badEmail = input.type === 'email' && input.value.trim()
+    && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim());
+  const invalid = empty || badEmail;
+  input.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+  return !invalid;
+}
+
+form.querySelectorAll('input').forEach(inp => {
+  inp.addEventListener('blur',  () => validate(inp));
+  inp.addEventListener('input', () => {
+    if (inp.getAttribute('aria-invalid') === 'true') validate(inp);
+  });
+});
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  let ok = true;
+  form.querySelectorAll('input[required]').forEach(inp => {
+    if (!validate(inp)) ok = false;
+  });
+  if (!ok) {
+    const first = form.querySelector('input[aria-invalid="true"]');
+    if (first) first.focus();
+    return;
+  }
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.querySelector('.btn-colorful-inner').childNodes[0].textContent = 'Sending… ';
+  setTimeout(() => {
+    document.getElementById('form-content').style.display = 'none';
+    const msg = document.getElementById('success-msg');
+    msg.style.display = 'flex';
+    msg.setAttribute('tabindex', '-1');
+    msg.focus();
+  }, 900);
+});
+</script>
+</body>
+</html>
