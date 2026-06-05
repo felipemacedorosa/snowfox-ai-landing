@@ -584,7 +584,10 @@ img { display:block; max-width:100%; }
   .what-next-eye    { margin-bottom: 10px; }
   .what-next-steps  { gap: 7px; }
   .wn-step          { font-size: 13.5px; }
-  .form-actions     { padding-top: 14px; gap: 8px; }
+  /* Fix: override auto margin so button sits right below the fields */
+  .form-actions     { margin-top: 18px; padding-top: 14px; gap: 8px; }
+  /* Don't force the form to stretch to full card height */
+  #lead-form        { flex: none; }
 
   /* Tighten copy card to match */
   .copy-card        { padding: 26px 30px 22px; }
