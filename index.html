@@ -569,6 +569,31 @@ img { display:block; max-width:100%; }
   .headline-block { margin-bottom: 30px; }
 }
 
+/* ─── LARGE DESKTOP (1280px+) ───────────────── */
+/* Match the balanced proportions of the laptop layout */
+@media(min-width:1280px) {
+  .body-grid  { grid-template-columns: 1fr 520px; gap: 22px; }
+  .form-card  { padding: 32px 36px 28px; }
+  .copy-card  { padding: 32px 36px 28px; }
+  /* Restore form auto-stretch so button stays pinned to card bottom */
+  #lead-form  { flex: 1; }
+  .form-actions { margin-top: auto; padding-top: 18px; gap: 10px; }
+  /* Slightly tighter field sizing */
+  .field-group  { gap: 16px; }
+  .field input  { height: 56px; font-size: 16px; padding: 0 18px; }
+  .form-header  { margin-bottom: 24px; }
+  .form-desc    { font-size: 16px; }
+  .csect-body   { font-size: 17px; }
+  .prob-item,
+  .deliv-item   { font-size: 17px; }
+}
+@media(min-width:1440px) {
+  .body-grid { grid-template-columns: 1fr 560px; gap: 26px; }
+}
+@media(min-width:1680px) {
+  .body-grid { grid-template-columns: 1fr 600px; gap: 30px; }
+}
+
 /* ─── SMALL LAPTOP (900–1279px) ─────────────── */
 @media(min-width:900px) and (max-width:1279px) {
   /* Narrow the right column so form doesn't dominate */
