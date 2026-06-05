@@ -401,7 +401,94 @@ img { display:block; max-width:100%; }
 }
 .lang-option--active:hover { background: rgba(142,45,226,0.12); }
 .lang-option-flag { font-size: 16px; line-height: 1; }
-@media(max-width:899px) { .nav-links { display: none; } }
+/* ─── HAMBURGER BUTTON ───────────────────────── */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background .18s;
+}
+.nav-hamburger:hover { background: rgba(255,255,255,0.06); }
+.nav-hamburger span {
+  display: block;
+  height: 2px;
+  background: rgba(255,255,255,0.80);
+  border-radius: 2px;
+  transition: transform .22s ease, opacity .18s ease, width .18s ease;
+  transform-origin: center;
+}
+.nav-hamburger span:nth-child(1) { width: 22px; }
+.nav-hamburger span:nth-child(2) { width: 16px; }
+.nav-hamburger span:nth-child(3) { width: 22px; }
+.nav.menu-open .nav-hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); width: 22px; }
+.nav.menu-open .nav-hamburger span:nth-child(2) { opacity: 0; }
+.nav.menu-open .nav-hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); width: 22px; }
+
+/* ─── MOBILE NAV PANEL ───────────────────────── */
+@media(max-width:899px) {
+  .nav-hamburger { display: flex; }
+
+  .nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: absolute;
+    top: var(--nav-h);
+    left: 0;
+    right: 0;
+    background: rgba(5,1,22,0.97);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 10px 16px 16px;
+    list-style: none;
+    /* hidden by default */
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity .2s ease, transform .2s ease;
+    z-index: 199;
+  }
+  .nav.menu-open .nav-links {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .nav-link {
+    padding: 12px 14px;
+    font-size: 15px;
+    border-radius: 8px;
+  }
+  /* Language selector sits at bottom of mobile menu */
+  .nav-lang-wrap { margin-left: 0; }
+  .nav-lang {
+    padding: 12px 14px;
+    font-size: 15px;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .lang-dropdown {
+    position: static;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    box-shadow: none;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    margin-top: 4px;
+    display: none;
+  }
+  .nav-lang-wrap.open .lang-dropdown { display: flex; }
+}
 
 /* .btn-nav — now uses .btn-colorful base, no separate rules needed */
 
@@ -821,6 +908,43 @@ img { display:block; max-width:100%; }
 .footer-copy { font-family:'Poppins',sans-serif; font-size:10px; color:var(--text-m); }
 
 
+/* ─── MOBILE LAYOUT ─────────────────────────── */
+@media(max-width:899px) {
+  /* Tighten hero on small screens */
+  .headline-block {
+    padding: 16px 0 18px;
+    margin-bottom: 16px;
+  }
+  /* Prevent the radial pseudo-element from causing horizontal scroll */
+  .headline-block::before { inset: -10% 0; }
+  .body-grid::before { inset: -16px 0; }
+
+  /* Reduce bottom gap */
+  .body-grid { padding-bottom: 32px; }
+
+  /* Slightly tighter card section spacing */
+  .csect { margin-bottom: 22px; }
+  .csect-rule { margin: 18px 0; }
+
+  /* Make csect-body not overflow card */
+  .csect-body { max-width: 100%; font-size: 16px; }
+  .prob-item, .deliv-item { font-size: 16px; }
+  .prob-pip { font-size: 16px; }
+
+  /* Form desc size */
+  .form-desc { font-size: 16px; }
+  .form-header { margin-bottom: 24px; }
+
+  /* Input height a touch shorter on mobile */
+  .field input { height: 54px; font-size: 16px; }
+
+  /* What-next steps font */
+  .wn-step { font-size: 14px; }
+
+  /* Footer stack stays centred — already column, just reduce gap */
+  .footer { padding: 20px 0; }
+}
+
 /* ─── PT / ES HERO SCALE ─────────────────────── */
 [lang="pt-BR"] .headline-block h1,
 [lang="es"] .headline-block h1 {
@@ -859,7 +983,11 @@ img { display:block; max-width:100%; }
           <img src="logo-dark.png" alt="Snowfox AI" height="28">
         </a>
 
-        <ul class="nav-links" role="list">
+        <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+          <span></span><span></span><span></span>
+        </button>
+
+        <ul class="nav-links" id="nav-links" role="list">
           <li><a href="#" class="nav-link">About</a></li>
           <li>
             <a href="#" class="nav-link">
@@ -1237,6 +1365,40 @@ const nav = document.getElementById('nav');
 const syncNav = () => nav.classList.toggle('solid', window.scrollY > 16);
 window.addEventListener('scroll', syncNav, { passive: true });
 syncNav();
+
+// ─── Hamburger menu ───────────────────────────────
+(function () {
+  const hamburger = document.getElementById('nav-hamburger');
+  const navLinks  = document.getElementById('nav-links');
+  if (!hamburger || !navLinks) return;
+
+  function openMenu() {
+    nav.classList.add('menu-open');
+    hamburger.setAttribute('aria-expanded', 'true');
+    hamburger.setAttribute('aria-label', 'Close menu');
+  }
+  function closeMenu() {
+    nav.classList.remove('menu-open');
+    hamburger.setAttribute('aria-expanded', 'false');
+    hamburger.setAttribute('aria-label', 'Open menu');
+  }
+  hamburger.addEventListener('click', function (e) {
+    e.stopPropagation();
+    nav.classList.contains('menu-open') ? closeMenu() : openMenu();
+  });
+  // Close on link click
+  navLinks.querySelectorAll('.nav-link').forEach(function (link) {
+    link.addEventListener('click', closeMenu);
+  });
+  // Close on outside click
+  document.addEventListener('click', function (e) {
+    if (!nav.contains(e.target)) closeMenu();
+  });
+  // Close on resize to desktop
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 899) closeMenu();
+  }, { passive: true });
+}());
 
 // ─── Form validation + submit ────────────────────
 const form = document.getElementById('lead-form');
