@@ -910,6 +910,16 @@ img { display:block; max-width:100%; }
 
 /* ─── MOBILE LAYOUT ─────────────────────────── */
 @media(max-width:899px) {
+  /* Force single-column grid and prevent items overflowing */
+  .body-grid {
+    grid-template-columns: 1fr;
+    padding-bottom: 32px;
+  }
+  /* min-width:0 stops grid items from growing beyond 1fr */
+  .copy-card,
+  .right-col,
+  .form-card { min-width: 0; width: 100%; box-sizing: border-box; }
+
   /* Tighten hero on small screens */
   .headline-block {
     padding: 16px 0 18px;
@@ -918,9 +928,6 @@ img { display:block; max-width:100%; }
   /* Prevent the radial pseudo-element from causing horizontal scroll */
   .headline-block::before { inset: -10% 0; }
   .body-grid::before { inset: -16px 0; }
-
-  /* Reduce bottom gap */
-  .body-grid { padding-bottom: 32px; }
 
   /* Slightly tighter card section spacing */
   .csect { margin-bottom: 22px; }
@@ -935,8 +942,9 @@ img { display:block; max-width:100%; }
   .form-desc { font-size: 16px; }
   .form-header { margin-bottom: 24px; }
 
-  /* Input height a touch shorter on mobile */
-  .field input { height: 54px; font-size: 16px; }
+  /* Input height a touch shorter on mobile, fully contained */
+  .field input { height: 54px; font-size: 16px; width: 100%; max-width: 100%; }
+  .btn-colorful-lg { width: 100%; max-width: 100%; }
 
   /* What-next steps font */
   .wn-step { font-size: 14px; }
