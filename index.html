@@ -953,6 +953,10 @@ img { display:block; max-width:100%; }
   .footer { padding: 20px 0; }
 }
 
+/* Mobile-only line break in hero headline */
+.mob-br { display: none; }
+@media(max-width:899px) { .mob-br { display: block; } }
+
 /* ─── PT / ES HERO SCALE ─────────────────────── */
 [lang="pt-BR"] .headline-block h1,
 [lang="es"] .headline-block h1 {
@@ -1036,7 +1040,7 @@ img { display:block; max-width:100%; }
 
     <!-- Headline -->
     <div class="headline-block">
-      <h1 data-i18n-html="h1">Is Your Company Truly Ready to Turn AI into <span class="gt">Business Value?</span></h1>
+      <h1 data-i18n-html="h1">Is Your Company Truly Ready to<br class="mob-br"> Turn AI into <span class="gt">Business Value?</span></h1>
       <p class="sub" data-i18n="sub">Get a clear AI readiness score and practical next steps in under 10 minutes.</p>
     </div>
 
@@ -1465,7 +1469,7 @@ form.addEventListener('submit', e => {
   var T = {
     en: {
       'title':           'AI Readiness Assessment | SnowFox AI',
-      'h1':              'Is Your Company Truly Ready to Turn AI into <span class="gt">Business Value?</span>',
+      'h1':              'Is Your Company Truly Ready to<br class="mob-br"> Turn AI into <span class="gt">Business Value?</span>',
       'sub':             'Get a clear AI readiness score and practical next steps in under 10 minutes.',
       'challenge-eye':   'The Challenge',
       'challenge-title': 'Why AI Initiatives Fall Short',
