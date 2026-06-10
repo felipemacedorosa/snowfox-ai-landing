@@ -900,6 +900,55 @@ img { display:block; max-width:100%; }
 }
 .field input[aria-invalid="true"] ~ .field-error { display:block; }
 
+/* ─── SELECT FIELDS ──────────────────────────── */
+.field select {
+  height: 62px;
+  padding: 0 44px 0 20px;
+  border: 1.5px solid var(--input-border);
+  border-radius: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #1a0840;
+  background: var(--input-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a090c0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color .18s, box-shadow .18s;
+  touch-action: manipulation;
+  width: 100%;
+}
+.field select:hover:not(:focus) { border-color: var(--pa-35); }
+.field select:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px var(--pa-18);
+}
+.field select option { background: #120830; color: #ffffff; }
+
+/* ─── FORM ERROR BANNER ───────────────────────── */
+.form-error-banner {
+  display: none;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 16px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  background: rgba(239,68,68,0.10);
+  border: 1px solid rgba(239,68,68,0.30);
+  color: rgba(252,165,165,0.92);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.form-error-banner.visible { display: flex; }
+.form-error-banner svg { flex-shrink: 0; margin-top: 1px; }
+
+/* ─── SUBMIT BUTTON SPINNER ──────────────────── */
+@keyframes btn-spin { to { transform: rotate(360deg); } }
+
 /* .btn-submit — now uses .btn-colorful base, no separate rules needed */
 
 .form-actions {
@@ -1161,6 +1210,12 @@ img { display:block; max-width:100%; }
 
             <!-- Form fields -->
             <form id="lead-form" novalidate autocomplete="on" style="flex:1;display:flex;flex-direction:column;">
+              <!-- Submission error banner -->
+              <div class="form-error-banner" id="form-error-banner" role="alert" aria-live="polite">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="7"/><path d="M8 5v3"/><circle cx="8" cy="11.5" r=".6" fill="currentColor" stroke="none"/></svg>
+                <span data-i18n="error-submit">We couldn't submit your information. Please try again.</span>
+              </div>
+
               <div class="fields-zone">
                 <div class="field-group">
                   <div class="field">
@@ -1190,6 +1245,34 @@ img { display:block; max-width:100%; }
                       data-i18n-placeholder="placeholder-role"
                       autocomplete="organization-title" required aria-required="true" aria-describedby="e-role">
                     <span id="e-role" class="field-error" role="alert" data-i18n="error-role">Please enter your job title.</span>
+                  </div>
+                  <div class="field">
+                    <label for="f-industry" data-i18n="label-industry">Industry</label>
+                    <select id="f-industry" name="industry">
+                      <option value="" data-i18n="placeholder-industry">Select your industry</option>
+                      <option value="Technology">Technology</option>
+                      <option value="Financial Services">Financial Services</option>
+                      <option value="Healthcare &amp; Life Sciences">Healthcare &amp; Life Sciences</option>
+                      <option value="Retail &amp; Consumer Goods">Retail &amp; Consumer Goods</option>
+                      <option value="Manufacturing">Manufacturing</option>
+                      <option value="Energy &amp; Utilities">Energy &amp; Utilities</option>
+                      <option value="Professional Services">Professional Services</option>
+                      <option value="Media &amp; Entertainment">Media &amp; Entertainment</option>
+                      <option value="Government &amp; Public Sector">Government &amp; Public Sector</option>
+                      <option value="Education">Education</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="f-size" data-i18n="label-size">Company Size</label>
+                    <select id="f-size" name="companySize">
+                      <option value="" data-i18n="placeholder-size">Select company size</option>
+                      <option value="1–50">1–50 employees</option>
+                      <option value="51–200">51–200 employees</option>
+                      <option value="201–1,000">201–1,000 employees</option>
+                      <option value="1,001–5,000">1,001–5,000 employees</option>
+                      <option value="5,000+">5,000+ employees</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -1474,6 +1557,28 @@ syncNav();
 }());
 
 // ─── Form validation + submit ────────────────────
+var GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKHhj_2DFt1OqWD-3KNMwCvCPqgz5aHsJHlXkt4hTcby6-0578yy--NpkV3Nqe6wIolA/exec';
+var ASSESSMENT_URL    = 'http://localhost:3000';
+
+function generateLeadId() {
+  try { return crypto.randomUUID(); } catch (e) {
+    return 'lead_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+  }
+}
+
+async function submitLeadToGoogleSheets(data) {
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      mode:   'no-cors',
+      body:   JSON.stringify(data),
+    });
+    return { success: true };
+  } catch (e) {
+    return { success: false };
+  }
+}
+
 const form = document.getElementById('lead-form');
 
 function validate(input) {
@@ -1492,8 +1597,12 @@ form.querySelectorAll('input').forEach(inp => {
   });
 });
 
-form.addEventListener('submit', e => {
+form.addEventListener('submit', async function(e) {
   e.preventDefault();
+
+  const errorBanner = document.getElementById('form-error-banner');
+  errorBanner.classList.remove('visible');
+
   let ok = true;
   form.querySelectorAll('input[required]').forEach(inp => {
     if (!validate(inp)) ok = false;
@@ -1503,16 +1612,32 @@ form.addEventListener('submit', e => {
     if (first) first.focus();
     return;
   }
-  const btn = document.getElementById('submit-btn');
+
+  const btn   = document.getElementById('submit-btn');
+  const inner = btn.querySelector('.btn-colorful-inner');
   btn.disabled = true;
-  btn.querySelector('.btn-colorful-inner').childNodes[0].textContent = 'Sending… ';
-  setTimeout(() => {
-    document.getElementById('form-content').style.display = 'none';
-    const msg = document.getElementById('success-msg');
-    msg.style.display = 'flex';
-    msg.setAttribute('tabindex', '-1');
-    msg.focus();
-  }, 900);
+  inner.innerHTML = '<svg style="animation:btn-spin 0.7s linear infinite;flex-shrink:0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10" opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg><span>Submitting…</span>';
+
+  const result = await submitLeadToGoogleSheets({
+    leadId:      generateLeadId(),
+    timestamp:   new Date().toISOString(),
+    name:        document.getElementById('f-name').value.trim(),
+    company:     document.getElementById('f-company').value.trim(),
+    email:       document.getElementById('f-email').value.trim(),
+    role:        document.getElementById('f-role').value.trim(),
+    industry:    document.getElementById('f-industry').value,
+    companySize: document.getElementById('f-size').value,
+    status:      'Started Assessment',
+  });
+
+  if (result.success) {
+    window.location.href = ASSESSMENT_URL;
+  } else {
+    btn.disabled = false;
+    inner.innerHTML = '<span data-i18n="cta">Start AI Readiness Assessment</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>';
+    errorBanner.classList.add('visible');
+    errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 });
 </script>
 
@@ -1562,9 +1687,14 @@ form.addEventListener('submit', e => {
       'error-name':      'Please enter your name.',
       'error-email':     'Please enter a valid email.',
       'error-company':   'Please enter your company.',
-      'error-role':      'Please enter your job title.',
-      'cta':             'Start AI Readiness Assessment',
-      'form-note':       'Free &nbsp;·&nbsp; Instant results &nbsp;·&nbsp; No commitment',
+      'error-role':          'Please enter your job title.',
+      'label-industry':      'Industry',
+      'placeholder-industry':'Select your industry',
+      'label-size':          'Company Size',
+      'placeholder-size':    'Select company size',
+      'error-submit':        'We couldn\'t submit your information. Please try again.',
+      'cta':                 'Start AI Readiness Assessment',
+      'form-note':           'Free &nbsp;·&nbsp; Instant results &nbsp;·&nbsp; No commitment',
     },
     pt: {
       'title':           'Avaliação de Prontidão em IA | SnowFox AI',
@@ -1600,9 +1730,14 @@ form.addEventListener('submit', e => {
       'error-name':      'Por favor, insira seu nome.',
       'error-email':     'Por favor, insira um e-mail válido.',
       'error-company':   'Por favor, insira sua empresa.',
-      'error-role':      'Por favor, insira seu cargo.',
-      'cta':             'Iniciar Avaliação de Prontidão em IA',
-      'form-note':       'Gratuito &nbsp;·&nbsp; Resultado imediato &nbsp;·&nbsp; Sem compromisso',
+      'error-role':          'Por favor, insira seu cargo.',
+      'label-industry':      'Setor',
+      'placeholder-industry':'Selecione seu setor',
+      'label-size':          'Tamanho da Empresa',
+      'placeholder-size':    'Selecione o tamanho',
+      'error-submit':        'Não foi possível enviar suas informações. Por favor, tente novamente.',
+      'cta':                 'Iniciar Avaliação de Prontidão em IA',
+      'form-note':           'Gratuito &nbsp;·&nbsp; Resultado imediato &nbsp;·&nbsp; Sem compromisso',
     },
     es: {
       'title':           'Evaluación de Preparación en IA | SnowFox AI',
@@ -1638,9 +1773,14 @@ form.addEventListener('submit', e => {
       'error-name':      'Por favor, ingresa tu nombre.',
       'error-email':     'Por favor, ingresa un email válido.',
       'error-company':   'Por favor, ingresa tu empresa.',
-      'error-role':      'Por favor, ingresa tu cargo.',
-      'cta':             'Iniciar Evaluación de Preparación en IA',
-      'form-note':       'Gratis &nbsp;·&nbsp; Resultado inmediato &nbsp;·&nbsp; Sin compromiso',
+      'error-role':          'Por favor, ingresa tu cargo.',
+      'label-industry':      'Industria',
+      'placeholder-industry':'Selecciona tu industria',
+      'label-size':          'Tamaño de Empresa',
+      'placeholder-size':    'Selecciona el tamaño',
+      'error-submit':        'No pudimos enviar tu información. Por favor, inténtalo de nuevo.',
+      'cta':                 'Iniciar Evaluación de Preparación en IA',
+      'form-note':           'Gratis &nbsp;·&nbsp; Resultado inmediato &nbsp;·&nbsp; Sin compromiso',
     },
   };
 
