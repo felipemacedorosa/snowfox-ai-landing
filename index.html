@@ -1267,7 +1267,9 @@ img { display:block; max-width:100%; }
                     <label for="f-size" data-i18n="label-size">Company Size</label>
                     <select id="f-size" name="companySize">
                       <option value="" data-i18n="placeholder-size">Select company size</option>
-                      <option value="1–50">1–50 employees</option>
+                      <option value="1–10">1–10 employees</option>
+                      <option value="11–20">11–20 employees</option>
+                      <option value="21–50">21–50 employees</option>
                       <option value="51–200">51–200 employees</option>
                       <option value="201–1,000">201–1,000 employees</option>
                       <option value="1,001–5,000">1,001–5,000 employees</option>
@@ -1558,7 +1560,7 @@ syncNav();
 
 // ─── Form validation + submit ────────────────────
 var GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKHhj_2DFt1OqWD-3KNMwCvCPqgz5aHsJHlXkt4hTcby6-0578yy--NpkV3Nqe6wIolA/exec';
-var ASSESSMENT_URL    = 'http://localhost:3000';
+var ASSESSMENT_URL    = 'https://felipemacedorosa.github.io/Snowfox-AI-Questionnaire';
 
 function generateLeadId() {
   try { return crypto.randomUUID(); } catch (e) {
